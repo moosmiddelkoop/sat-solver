@@ -59,12 +59,23 @@ class SudokuSolver:
 
     def DPLL(self):
         '''Uses literal 3d array and clauses list'''
+
         pass
 
                 
     def run(self) -> None:
         self.read_input()
         self.add_rules()
+
+    def check_unit_clauses(self):
+        for clause in self.clauses:
+            if len(clause) == 1:
+                
+                # TODO: find a more elegant way to do this
+                clause_uitgepakt = clause[0]
+
+                # set unit clause literal to true
+                self.literal_arr[clause_uitgepakt[0], clause_uitgepakt[1], clause_uitgepakt[2]] == 1
 
 
 if __name__ == "__main__":
