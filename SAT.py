@@ -108,6 +108,9 @@ def run(input_path, rules_path):
 
     return solutions
 
+def solutions_to_cnf():
+    # TODO: this
+    pass
 
 if __name__ == "__main__":
 
@@ -140,6 +143,8 @@ if __name__ == "__main__":
 
     sample_sudoku = "..4.3.2.1..4.12. "
     print(run("test_sudokus/4x4.txt", "rules/sudoku-rules-4x4.txt"))
+
+
 
 
 
