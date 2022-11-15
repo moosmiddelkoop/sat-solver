@@ -1,10 +1,15 @@
+#############################################
+# This file deals with most of the I/O action
+#############################################
+
 import sys
 import math
 import numpy as np
+from dpll import *
+from tqdm import tqdm
 
-class SudokuSolver:
 
-    def __init__(self, input_path, rules):
+def __init__(self, input_path, rules):
         self.input_path = input_path
         self.literal_arr = None
         self.unit_clauses = []
@@ -16,94 +21,125 @@ class SudokuSolver:
             self.input_list = [line for line in f]
             self.size = math.sqrt(len(input_list[0]) - 1)
 
-        self.nr_literals = self.size ** 3
 
-    def read_input(self) -> None:
+def read_input(sudoku):
+    '''
+    input: type=str, sudoku string in format: "..3..4...8. etc")
+    output: list of unit clauses
 
-        # initialize the literal spoce
-        self.literal_arr = np.zeros((self.size, self.size, self.size))
+    WORKS
+    '''
+  
+    sudoku_minus_space = sudoku[:-1]
+    unit_clauses = []
+    size = math.sqrt(len(sudoku_minus_space))
 
-        # TODO: make it work for multiple inputs
-        for i, char in enumerate(self.input_list):
+    # TODO: make it work for multiple inputs
+    for i, char in enumerate(sudoku_minus_space):
 
-            if char == ".":
-                continue
-            else:
-                digit = char
-                row = i // self.size
-                column = i % self.size
-                self.unit_clauses.append(f"{digit}{row}{column}")
+        if char == ".":
+            continue
+        else:
+            digit = char
 
-            # set unit clauses to true
-            self.literal_arr[row, column, digit] == 1
+            # + 1 because computer counting starts at 0 but human counting starts at 1
+            row = str(int(i // size) + 1)
+            column = str(int(i % size) + 1)
 
+            # make a list of the clause so it's corretly represented as a unit clause
+            clause = [int(row + column + digit)]
+            unit_clauses.append(clause)
 
-    def add_rules(self) -> None:
-        '''lmao this whole function isn't even needed fml
-            oh wait maybe we do for testing'''
-
-        ## PART1: turn rules file into list of clauses
-        rules_cnf = []
-
-        # turn rules txt file into list of clauses. Loop over all but the first line
-        with open(self.rules, 'r') as f:
-            for clause in f[1:]:
-
-                # add clauses as list of variables to list of clauses. Ignore last element bc this is 0 for each line
-                split_clause = clause.split[" "]
-                rules_cnf.append(split_clause[:-1])
-
-        ## PART2: append rules clauses to unit clauses
-        self.clauses = self.unit_clauses + rules_cnf
+    return unit_clauses
 
 
-    def DPLL(self):
-        '''Uses literal 3d array and clauses list'''
+def add_rules(unit_clauses, rules_path):
+    '''
+    input: rule file path (string), list of clauses
+    output: list of clauses: unit clauses added to rules. All variables represented as integers
 
-        pass
+    lmao this whole function isn't even needed fml
+    oh wait maybe we do for testing
 
-                
-    def run(self) -> None:
-        self.read_input()
-        self.add_rules()
+    WORKS
+    '''
 
-    def check_unit_clauses(self):
-        for clause in self.clauses:
-            if len(clause) == 1:
-                
-                # TODO: find a more elegant way to do this
-                clause_uitgepakt = clause[0]
+    ## PART1: turn rules file into list of clauses
+    rules_cnf = []
 
-                # set unit clause literal to true
-                self.literal_arr[clause_uitgepakt[0], clause_uitgepakt[1], clause_uitgepakt[2]] == 1
+    # turn rules txt file into list of clauses. Loop over all but the first line
+    with open(rules_path, 'r') as f:
+
+        lines = f.readlines()
+
+        for clause in lines[1:]:
+
+            # add clauses as list of variables to list of clauses. Ignore last element bc this is 0 for each line
+            split_clause = clause.split(" ")
+            split_clause_ints = [int(var) for var in split_clause[:-1]]
+            rules_cnf.append(split_clause_ints)
+
+    ## PART2: append rules clauses to unit clauses
+    clauses = unit_clauses + rules_cnf
+
+    return clauses
+
+            
+def run(input_path, rules_path):
+    '''
+    MASTER FUNCTION, currently only works for a single sudoku
+    
+    input: sudoku file path, rules file path
+    output: solved sudoku in dict format
+    '''
+
+    solutions = []
+
+    with open(input_path, 'r') as f:
+
+        lines = f.readlines()
+
+        for line in tqdm(lines):
+
+            unit_clauses = read_input(str(line))
+            clauses = add_rules(unit_clauses, rules_path)
+
+            solutions.append(dpll(clauses))
+
+    return solutions
 
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
-        raise Exception("Unexpected number of arguments, please provide strategy and input file")
+    # if len(sys.argv) != 3:
+    #     raise Exception("Unexpected number of arguments, please provide strategy and input file")
 
-    strategy = sys.argv[1]
-    input_filename = sys.argv[2]
+    # strategy = sys.argv[1]
+    # input_filename = sys.argv[2]
 
-    with open(input_filename, 'r') as input_file:
+    # with open(input_filename, 'r') as input_file:
 
-        # fetch the correct rules file, we have to make a list of the file in order for this to work
-        # note to self: REMEMBER DIFFERENCE BETWEEN FILENAME AND FILE. SHIT AINT A FILE UNTIL YOU'VE OPENED IT
-        input_file_list = [input for input in input_file]
+    #     # fetch the correct rules file, we have to make a list of the file in order for this to work
+    #     # note to self: REMEMBER DIFFERENCE BETWEEN FILENAME AND FILE. SHIT AINT A FILE UNTIL YOU'VE OPENED IT
+    #     input_file_list = [input for input in input_file]
 
-        # sneaky detail: input lines end in space, so actual length is always len - 1
-        input_line_length = len(input_file_list[0]) - 1
+    #     # sneaky detail: input lines end in space, so actual length is always len - 1
+    #     input_line_length = len(input_file_list[0]) - 1
 
-        if input_line_length == 16:
-            rules_filename = "rules/sudoku-rules-4x4.txt"
-        elif input_line_length == 81:
-            rules_filename = "rules/sudoku-rules-9x9.txt"
-        elif input_line_length == 256:
-            rules_filename = "rules/sudoku-rules-16x16.txt"
-        else:
-            raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
+    #     if input_line_length == 16:
+    #         rules_filename = "rules/sudoku-rules-4x4.txt"
+    #     elif input_line_length == 81:
+    #         rules_filename = "rules/sudoku-rules-9x9.txt"
+    #     elif input_line_length == 256:
+    #         rules_filename = "rules/sudoku-rules-16x16.txt"
+    #     else:
+    #         raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
 
-    solution_object = SudokuSolver(input_filename, rules_filename)
-    solution_object.run()
+    # solution_object = SudokuSolver(input_filename, rules_filename)
+    # solution_object.run()
+
+    sample_sudoku = "..4.3.2.1..4.12. "
+    print(run("test_sudokus/4x4.txt", "rules/sudoku-rules-4x4.txt"))
+
+
 
