@@ -13,7 +13,6 @@ def get_vars(clauses):
     '''
     input: 2D array of clauses
     output: dictionary of literals with values none
-
     '''
 
     vars = dict()
@@ -194,24 +193,26 @@ def jeroslaw_heuristic(clauses, vars_dict):
     assignment = True if count_dict[max_key][1] > count_dict[max_key][2] else False
     
     return (max_key, assignment)
-    
-test_clauses = [[1, 2, 3], [1, -2], [1, -3], [-2, 3]]
-literals = [1, 2, 3]
+
+if __name__ == "__main__":
+
+    test_clauses = [[1, 2, 3], [1, -2], [1, -3], [-2, 3]]
+    literals = [1, 2, 3]
 
 
-# Small test cases provided below
+    # Small test cases provided below
 
-# TRUE               
-# clauses  = [[1, -5, 4, 2], [-1, 5, 3, 4, 2], [-3, -4, 2], [3], [5]]
+    # TRUE               
+    # clauses  = [[1, -5, 4, 2], [-1, 5, 3, 4, 2], [-3, -4, 2], [3], [5]]
 
-# FALSE
-# clauses  = [[3, 1, 2], [3, 1, -2], [3, -1, 2], [-3, 1, 2], 
-    # [3, -1, -2], [-3, 1, -2], [-3, -1, 2], [-3, -1, -2]]
-                
-# TRUE
-# clauses  = [[3, 1, -2], [-3, -1, 2], [-3, 1, -2]]
+    # FALSE
+    # clauses  = [[3, 1, 2], [3, 1, -2], [3, -1, 2], [-3, 1, 2], 
+        # [3, -1, -2], [-3, 1, -2], [-3, -1, 2], [-3, -1, -2]]
+                    
+    # TRUE
+    # clauses  = [[3, 1, -2], [-3, -1, 2], [-3, 1, -2]]
 
-# FALSE
-clauses = [[-4, 5], [-5, 4], [-4, -5], [4, 5], [1, 3, 2], [3, -2, -1]]
+    # FALSE
+    clauses = [[-4, 5], [-5, 4], [-4, -5], [4, 5], [1, 3, 2], [3, -2, -1]]
 
-print(dpll(clauses))
+    print(dpll(clauses))
