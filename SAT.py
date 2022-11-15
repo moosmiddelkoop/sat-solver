@@ -9,17 +9,17 @@ from dpll import *
 from tqdm import tqdm
 
 
-def __init__(self, input_path, rules):
-        self.input_path = input_path
-        self.literal_arr = None
-        self.unit_clauses = []
-        self.rules = rules
-        self.clauses = None
+# def __init__(self, input_path, rules):
+#         self.input_path = input_path
+#         self.literal_arr = None
+#         self.unit_clauses = []
+#         self.rules = rules
+#         self.clauses = None
 
-        # see comments in ifnameismain part
-        with open(input, 'r') as f:
-            self.input_list = [line for line in f]
-            self.size = math.sqrt(len(input_list[0]) - 1)
+#         # see comments in ifnameismain part
+#         with open(input, 'r') as f:
+#             self.input_list = [line for line in f]
+#             self.size = math.sqrt(len(input_list[0]) - 1)
 
 
 def read_input(sudoku):
@@ -114,35 +114,31 @@ def solutions_to_cnf():
 
 if __name__ == "__main__":
 
-    # if len(sys.argv) != 3:
-    #     raise Exception("Unexpected number of arguments, please provide strategy and input file")
+    if len(sys.argv) != 3:
+        raise Exception("Unexpected number of arguments, please provide strategy and input file")
 
-    # strategy = sys.argv[1]
-    # input_filename = sys.argv[2]
+    strategy = sys.argv[1]
+    input_filename = sys.argv[2]
 
-    # with open(input_filename, 'r') as input_file:
+    with open(input_filename, 'r') as input_file:
 
-    #     # fetch the correct rules file, we have to make a list of the file in order for this to work
-    #     # note to self: REMEMBER DIFFERENCE BETWEEN FILENAME AND FILE. SHIT AINT A FILE UNTIL YOU'VE OPENED IT
-    #     input_file_list = [input for input in input_file]
+        # note to self: REMEMBER DIFFERENCE BETWEEN FILENAME AND FILE. SHIT AINT A FILE UNTIL YOU'VE OPENED IT
+        # fetch the correct rules file, just make this list so we can count how big the sudoku we're dealing with is
+        input_file_list = [input for input in input_file]
 
-    #     # sneaky detail: input lines end in space, so actual length is always len - 1
-    #     input_line_length = len(input_file_list[0]) - 1
+        # sneaky detail: input lines end in space, so actual length is always len - 1
+        input_line_length = len(input_file_list[0]) - 1
 
-    #     if input_line_length == 16:
-    #         rules_filename = "rules/sudoku-rules-4x4.txt"
-    #     elif input_line_length == 81:
-    #         rules_filename = "rules/sudoku-rules-9x9.txt"
-    #     elif input_line_length == 256:
-    #         rules_filename = "rules/sudoku-rules-16x16.txt"
-    #     else:
-    #         raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
+        if input_line_length == 16:
+            rules_filename = "rules/sudoku-rules-4x4.txt"
+        elif input_line_length == 81:
+            rules_filename = "rules/sudoku-rules-9x9.txt"
+        elif input_line_length == 256:
+            rules_filename = "rules/sudoku-rules-16x16.txt"
+        else:
+            raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
 
-    # solution_object = SudokuSolver(input_filename, rules_filename)
-    # solution_object.run()
-
-    sample_sudoku = "..4.3.2.1..4.12. "
-    print(run("test_sudokus/4x4.txt", "rules/sudoku-rules-4x4.txt"))
+    print(run(input_filename, rules_filename))
 
 
 
