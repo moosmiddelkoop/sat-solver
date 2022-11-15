@@ -34,21 +34,18 @@ def simplify_clauses(clauses, variable):
     returns: simplified clauses list
     """
     
-    # print(variable)
     clauses_copy = deepcopy(clauses)
 
     for i, clause in enumerate(clauses):
         
         # For True literals: remove whole clause from knowledge base
         if variable in clause:
-            print(f"{variable} found in clause {clause}")
             clauses_copy.remove(clause)
 
     for clause in clauses_copy:
         
         # For False literals: remove literal from clause
         if -variable in clause:
-            print(f"{-variable} found in clause {clause}")
             clause.remove(-variable)
                 
     return clauses_copy
@@ -84,9 +81,6 @@ def solve(clauses, var_dict):
     # Create deepcopies of clauses and literals up to this point
     temp_clauses = deepcopy(clauses)
     temp_vars = deepcopy(var_dict)
-
-    print(temp_vars) 
-    print(temp_clauses)
 
     # handle unit clauses
     temp_clauses, temp_vars = handle_unit(temp_clauses, temp_vars)
@@ -130,9 +124,6 @@ def handle_unit(clauses, var_dict):
     while i < len(clauses):
 
         if len(clauses[i]) == 1:
-
-            print('handle_unit() activated')
-
 
             # unpack variable from unit clause
             variable = clauses[i][0]
