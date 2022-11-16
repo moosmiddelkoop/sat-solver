@@ -106,10 +106,25 @@ def run(input_path, rules_path):
 
             solutions.append(dpll(clauses))
 
+        # line = lines[0]
+
+        # unit_clauses = read_input(str(line))
+        # clauses = add_rules(unit_clauses, rules_path)
+
+        # solutions.append(dpll(clauses))
+
     return solutions
 
-def solutions_to_cnf():
+def solutions_to_cnf(vars_dict):
+    '''
+    input: dict of variables with values True or False
+    output: txt file of solution in cnf format
+    '''
+
     # TODO: this
+    n_vars = len(vars_dict)
+    
+
     pass
 
 if __name__ == "__main__":
