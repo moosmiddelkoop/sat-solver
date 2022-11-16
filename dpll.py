@@ -34,7 +34,7 @@ def simplify_clauses(clauses, variable):
     returns: simplified clauses list
     """
     
-    clauses_copy = deepcopy(clauses)
+    clauses_copy = clauses.copy()
 
     for i, clause in enumerate(clauses):
         
@@ -79,8 +79,8 @@ def solve(clauses, var_dict):
     """
 
     # Create deepcopies of clauses and literals up to this point
-    temp_clauses = deepcopy(clauses)
-    temp_vars = deepcopy(var_dict)
+    temp_clauses = clauses.copy()
+    temp_vars = var_dict.copy()
 
     # handle unit clauses
     temp_clauses, temp_vars = handle_unit(temp_clauses, temp_vars)
@@ -204,6 +204,6 @@ if __name__ == "__main__":
     # clauses  = [[3, 1, -2], [-3, -1, 2], [-3, 1, -2]]
 
     # FALSE
-    clauses = [[-4, 5], [-5, 4], [-4, -5], [4, 5], [1, 3, 2], [3, -2, -1]]
+    # clauses = [[-4, 5], [-5, 4], [-4, -5], [4, 5], [1, 3, 2], [3, -2, -1]]
 
     print(dpll(clauses))
