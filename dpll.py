@@ -36,7 +36,7 @@ def simplify_clauses(clauses, variable):
     
     clauses_copy = clauses.copy()
 
-    for i, clause in enumerate(clauses):
+    for clause in clauses:
         
         # For True literals: remove whole clause from knowledge base
         if variable in clause:
@@ -73,7 +73,7 @@ def check_result(clauses):
         return None
 
 
-def solve(clauses, var_dict):
+def solve(clauses, var_dict, heuristic = None):
     """
     Recursive DPLL solver
     """
@@ -84,6 +84,15 @@ def solve(clauses, var_dict):
 
     # handle unit clauses
     temp_clauses, temp_vars = handle_unit(temp_clauses, temp_vars)
+
+    # After handling unit clause, apply human heuristic
+    #if heuristic == 'human':
+    #    key, assignment = human_heuristic(temp_clauses, temp_vars)
+    #    temp_vars[key] = assignment
+    
+    #elif heuristic == 'dlcs':
+    #    key, assignment = jeroslaw_heuristic(temp_clauses, temp_vars)
+    #    temp_vars[key] = assignment
 
     satisfiable = check_result(temp_clauses)
     if satisfiable != None: 
@@ -147,7 +156,7 @@ def handle_unit(clauses, var_dict):
     return clauses, var_dict
     
     
-def dpll(clauses):
+def dpll(clauses, heuristic=None):
     '''
     MASTER FUNCTION
     '''
@@ -161,7 +170,7 @@ def dpll(clauses):
         return satisfiable, variables
 
     # solve it
-    return solve(clauses, variables)
+    return solve(clauses, variables, heuristic)
 
 
 def jeroslaw_heuristic(clauses, vars_dict):
@@ -183,7 +192,27 @@ def jeroslaw_heuristic(clauses, vars_dict):
     #Assignment:
     assignment = True if count_dict[max_key][1] > count_dict[max_key][2] else False
     
-    return (max_key, assignment)
+    return max_key, assignment
+
+
+def human_heuristic(clauses, vars_dict):
+
+    row_count, col_count, square_count = [],[],[]
+
+    # Check literals that arae assigned True:
+
+    true_literals = []
+    for key, value in vars_dict.items():
+        if value == True:
+            true_literals.append(key)
+
+    for literal in true_literals:
+        row_count.append(literal[0])
+            # unpack variable from unit clause
+
+
+
+
 
 if __name__ == "__main__":
 

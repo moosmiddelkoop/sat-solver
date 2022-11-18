@@ -64,28 +64,52 @@ def add_rules(unit_clauses, rules_path):
     WORKS
     '''
 
-    ## PART1: turn rules file into list of clauses
-    rules_cnf = []
+    # ## PART1: turn rules file into list of clauses
+    # rules_cnf = []
 
-    # turn rules txt file into list of clauses. Loop over all but the first line
-    with open(rules_path, 'r') as f:
+    # # turn rules txt file into list of clauses. Loop over all but the first line
+    # with open(rules_path, 'r') as f:
+
+    #     lines = f.readlines()
+
+    #     for clause in lines[1:]:
+
+    #         # add clauses as list of variables to list of clauses. Ignore last element bc this is 0 for each line
+    #         split_clause = clause.split(" ")
+    #         split_clause_ints = [int(var) for var in split_clause[:-1]]
+    #         rules_cnf.append(split_clause_ints)
+
+    rules = read_DIMACS(rules_path)
+
+    ## PART2: append rules clauses to unit clauses
+    clauses = unit_clauses + rules
+
+    return clauses
+
+def read_DIMACS(filename):
+    '''
+    input: DIMACS file path
+    output: list of clauses
+
+    '''
+
+    clauses = []
+
+    with open(filename, 'r') as f:
 
         lines = f.readlines()
 
-        for clause in lines[1:]:
+        for line in lines[1:]:
 
             # add clauses as list of variables to list of clauses. Ignore last element bc this is 0 for each line
-            split_clause = clause.split(" ")
+            split_clause = line.split(" ")
             split_clause_ints = [int(var) for var in split_clause[:-1]]
-            rules_cnf.append(split_clause_ints)
-
-    ## PART2: append rules clauses to unit clauses
-    clauses = unit_clauses + rules_cnf
+            clauses.append(split_clause_ints)
 
     return clauses
 
             
-def run(input_path, rules_path):
+def run(input_path, rules_path, heuristic=None):
     '''
     MASTER FUNCTION, currently only works for a single sudoku
     
@@ -93,7 +117,8 @@ def run(input_path, rules_path):
     output: solved sudoku in dict format
     '''
 
-    solutions = []
+    satisfiabilities = []
+    variables = []
 
     with open(input_path, 'r') as f:
 
@@ -104,8 +129,10 @@ def run(input_path, rules_path):
             unit_clauses = read_input(str(line))
             clauses = add_rules(unit_clauses, rules_path)
 
-            solutions.append(dpll(clauses))
+            satisfiabilities.append(dpll(clauses, heuristic)[0])
+            variables.append(dpll(clauses, heuristic)[1])
 
+        # CODE FOR RUNNING ONE LINE
         # line = lines[0]
 
         # unit_clauses = read_input(str(line))
@@ -113,19 +140,36 @@ def run(input_path, rules_path):
 
         # solutions.append(dpll(clauses))
 
-    return solutions
+    return satisfiabilities, variables
 
-def solutions_to_cnf(vars_dict):
+def solutions_to_DIMACS(vars_dict, filename):
     '''
     input: dict of variables with values True or False
-    output: txt file of solution in cnf format
+    output: txt file of solution in DIMACS format
+
+    This output should again be a DIMACS file, but containing only the truth assignment to all variables.
+    If your input file is called 'filename', then make sure your outputfile is called 'filename.out'. 
+    If there is no solution (inconsistent problem), the output can be an empty file. If there are multiple solutions (eg. non-propert Sudoku) you only need to return a single solution.
     '''
 
-    # TODO: this
     n_vars = len(vars_dict)
-    
+    n_clauses = len(vars_dict)
 
-    pass
+    # write to file
+    with open(f"solutions/{filename}.out", "w") as f:
+
+        # write header
+        f.write(f"p cnf {n_clauses} {n_vars}\n")
+
+        # write variables
+        for var, value in vars_dict.items():
+
+            if value == True:
+                f.write(f"{var} 0\n")
+            else:
+                f.write(f"{-var} 0\n")
+    
+    return
 
 if __name__ == "__main__":
 
@@ -135,6 +179,7 @@ if __name__ == "__main__":
     strategy = sys.argv[1]
     input_filename = sys.argv[2]
 
+    # get the correct rules file
     with open(input_filename, 'r') as input_file:
 
         # note to self: REMEMBER DIFFERENCE BETWEEN FILENAME AND FILE. SHIT AINT A FILE UNTIL YOU'VE OPENED IT
@@ -153,7 +198,31 @@ if __name__ == "__main__":
         else:
             raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
 
-    print(run(input_filename, rules_filename))
+    # run the program
+    if strategy == '-S1':
+        print("Solving using strategy 1")
+        satisfiability, variables = run(input_filename, rules_filename)
+    elif strategy == '-S2':
+        print("Solving using strategy 2, not implemented yet")
+        satisfiability, variables = run(input_filename, rules_filename, heuristic='DLCS')
+    elif strategy == '-S3':
+        print("Solving using strategy 3, not implemented yet")
+        satisfiability, variables = run(input_filename, rules_filename, heuristic='human')
+    else:
+        raise Exception("Unexpected strategy, please provide -S1, -S2 or -S3")
+
+    for i, sat in enumerate(satisfiability):
+        print(f"Sudoku {i} is satisfiable: {sat}")
+
+    show_vars = input("Would you like to see the variables that make this sudoku true? (y/n)")
+
+    if show_vars == "y":
+        for i, vars in enumerate(variables):
+            print(f"Variables for sudoku {i}: {vars}")
+
+    # write solutions to file
+    solutions_to_DIMACS(variables[0], filename="test_output")
+
 
 
 
