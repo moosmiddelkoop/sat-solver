@@ -4,7 +4,8 @@
 # Therefore clauses are lists of integers
 ############################
 
-from copy import deepcopy
+import numpy as np
+from collections import Counter
 
 test_clauses = [[1, 2, 3], [1, -2], [1, -3], [-2, 3]]
 literals = [1, 2, 3]
@@ -30,7 +31,6 @@ found_literals = []
 def simplify_clauses(clauses, variable):
     """
     input: clauses list and variable (signed literal) based on which to simplify
-
     returns: simplified clauses list
     """
     
@@ -72,8 +72,8 @@ def check_result(clauses):
     else:
         return None
 
-
-def solve(clauses, var_dict, heuristic = None):
+### CHECK WHERE BEST TO PLACE SUDOKU SIZE
+def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
     """
     Recursive DPLL solver
     """
@@ -85,46 +85,67 @@ def solve(clauses, var_dict, heuristic = None):
     # handle unit clauses
     temp_clauses, temp_vars = handle_unit(temp_clauses, temp_vars)
 
-    # After handling unit clause, apply human heuristic
-    #if heuristic == 'human':
-    #    key, assignment = human_heuristic(temp_clauses, temp_vars)
-    #    temp_vars[key] = assignment
-    
-    #elif heuristic == 'dlcs':
-    #    key, assignment = jeroslaw_heuristic(temp_clauses, temp_vars)
-    #    temp_vars[key] = assignment
-
     satisfiable = check_result(temp_clauses)
     if satisfiable != None: 
         return satisfiable, temp_vars
     
-    # Extract key of first literal that == None
-    next_literal = [k for (k, v) in temp_vars.items() if v == None][0]
+    if heuristic == None:
+        # Extract key of first literal that == None
+        next_literal = [k for (k, v) in temp_vars.items() if v == None][0]
 
-    # First: for literal = FALSE
-    temp_vars[next_literal] = False # Truth Assignment
-    variable = -next_literal
-    temp_clauses = simplify_clauses(temp_clauses, variable)
-    result = solve(temp_clauses, temp_vars)
-    if(result[0]): 
-        return result
+        # First: for literal = FALSE
+        temp_vars[next_literal] = False # Truth Assignment
+        variable = -next_literal
+        temp_clauses = simplify_clauses(temp_clauses, variable)
+        result = solve(temp_clauses, temp_vars)
+        if(result[0]): 
+            return result
 
-    #Then: try literal = True
-    temp_vars[next_literal] = True
-    variable = next_literal
-    temp_clauses = simplify_clauses(temp_clauses, variable)
-    return solve(temp_clauses, temp_vars)
+        #Then: try literal = True
+        temp_vars[next_literal] = True
+        variable = next_literal
+        temp_clauses = simplify_clauses(temp_clauses, variable)
+        return solve(temp_clauses, temp_vars)
+    
+    #After handling unit clause, apply heuristics
+    elif heuristic == 'human':
+        key, assignment = human_heuristic(temp_vars, sudoku_size)
+        temp_vars[key] = assignment
+        variable = key if assignment else -key
+        temp_clauses = simplify_clauses(temp_clauses, variable)
+        if(result[0]): 
+            return result
+    
+        # Then: Try opposite
+        temp_vars[key] = False if assignment else True # Truth Assignment
+        variable = -key if assignment else key
+        temp_clauses = simplify_clauses(temp_clauses, variable)
+        result = solve(temp_clauses, temp_vars)
+        return solve(temp_clauses, temp_vars)
+
+    
+    elif heuristic == 'DLCS':
+        key, assignment = jeroslaw_heuristic(temp_clauses, temp_vars)
+        temp_vars[key] = assignment
+        variable = key if assignment else -key
+        temp_clauses = simplify_clauses(temp_clauses, variable)
+        if(result[0]): 
+            return result
+    
+        # Then: Try opposite
+        temp_vars[key] = False if assignment else True # Truth Assignment
+        variable = -key if assignment else key
+        temp_clauses = simplify_clauses(temp_clauses, variable)
+        result = solve(temp_clauses, temp_vars)
+        return solve(temp_clauses, temp_vars)
 
 
-        
 def handle_unit(clauses, var_dict):
     '''
     input: clauses list and variable dictionary
     returns: updated clauses list and updated variable dictionary
-
     sets all unit literals to true in the variable dict
     removes pure literals from the clauses list
-
     A bit of a weird construction because simplifying the clauses causes new clauses to be unit clauses, therefore
     You'd need to start over every time you handle a unit clause
     '''
@@ -163,6 +184,9 @@ def dpll(clauses, heuristic=None):
     # get variable dict
     variables = get_vars(clauses)   
 
+    # Get sudoku size (max number of rows as proxy): Needed for human heuristic
+    sudoku_size = max(int(str(item)[0]) for item in list(variables.keys()))
+    
     # check if problem is already solved 
     # TODO: fix this
     satisfiable = check_result(clauses)
@@ -170,7 +194,7 @@ def dpll(clauses, heuristic=None):
         return satisfiable, variables
 
     # solve it
-    return solve(clauses, variables, heuristic)
+    return solve(clauses, variables, sudoku_size, heuristic)
 
 
 def jeroslaw_heuristic(clauses, vars_dict):
@@ -195,8 +219,9 @@ def jeroslaw_heuristic(clauses, vars_dict):
     return max_key, assignment
 
 
-def human_heuristic(clauses, vars_dict):
 
+def human_heuristic(vars_dict, sudoku_size):
+    
     row_count, col_count, square_count = [],[],[]
 
     # Check literals that arae assigned True:
@@ -207,10 +232,206 @@ def human_heuristic(clauses, vars_dict):
             true_literals.append(key)
 
     for literal in true_literals:
-        row_count.append(literal[0])
-            # unpack variable from unit clause
+        row, col = int(str(literal)[0]), int(str(literal)[1])
+        row_count.append(row)
+        col_count.append(col)
+        
+        # Square count:
+        if sudoku_size == 16:
+            
+            if row < 5 and col < 5:
+                square = 1
+            elif row < 5 and col > 4 and col < 9:
+                square = 2
+            elif row < 5 and col > 8 and col < 13:
+                square = 3
+            elif row < 5 and col > 12:
+                square = 4
+                
+            if row > 4 and row < 9 and col < 5:
+                square = 5
+            elif row > 4 and row < 9 and col > 4 and col < 9:
+                square = 6
+            elif row > 4 and row < 9 and col > 8 and col < 13:
+                square = 7
+            elif row > 4 and row < 9 and col > 12:
+                square = 8
+                
+            if row > 8 and row < 13 and col < 5:
+                square = 9
+            elif row > 8 and row < 13 and col > 4 and col < 9:
+                square = 10
+            elif row > 8 and row < 13 and col > 8 and col < 13:
+                square = 11
+            elif row > 8 and row < 13 and col > 12:
+                square = 12
+                
+            if row > 12 and col < 5:
+                square = 13
+            elif row > 12 and col > 4 and col < 9:
+                square = 14
+            elif row > 12 and col > 8 and col < 13:
+                square = 15
+            elif row > 12 and col > 12:
+                square = 16
+                
+                
+        elif sudoku_size == 9:
+            
+            if row < 4 and col < 4:
+                square = 1
+            elif row < 4 and col > 3 and col < 7:
+                square = 2
+            elif row < 4 and col > 6:
+                square = 3
+            elif row > 3 and row < 7 and col < 4:
+                square = 4
+            elif row > 3 and row < 7 and col > 3 and col < 7:
+                square = 5
+            elif row > 3 and row < 7 and col > 6:
+                square = 6
+            elif row > 6 and col < 4:
+                square = 7
+            elif row > 6 and col > 3 and col < 7:
+                square = 8
+            elif row > 6 and col > 6:
+                square = 9
+        
+        elif sudoku_size == 4:
+            
+            if row < 3 and col < 3:
+                square = 1
+            if row < 3 and col > 2:
+                square = 2
+            if row > 2 and col < 3:
+                square = 3
+            elif row > 2 and col > 2:
+                square = 4
+        
+        
+        square_count.append(square)
+            
+    row_count_dict = Counter(row_count)
+    col_count_dict = Counter(col_count)
+    square_count_dict = Counter(square_count)
+    
+    # Excluding all rows, columns and squares that are already filled (when number of occurences == sudoku size) 
+    row_count_dict_clean= {k: v for k, v in row_count_dict.items() if v != sudoku_size}
+    col_count_dict_clean = {k: v for k, v in col_count_dict.items() if v != sudoku_size}
+    square_count_dict_clean = {k: v for k, v in square_count_dict.items() if v != sudoku_size}
 
+    # 
+    max_occurence_dict = {"row" + str(max(row_count_dict_clean, key=row_count_dict_clean.get)): max(row_count_dict_clean.values()),
+                         "col" + str(max(col_count_dict_clean, key=col_count_dict_clean.get)): max(col_count_dict_clean.values()),
+                        "sq." + str(max(square_count_dict_clean, key=square_count_dict_clean.get)): max(square_count_dict_clean.values())}
 
+    print(max_occurence_dict)
+    # Get key of entry in the dictionary that has the highest count. If two have the same, choose one randomly (that's done in the second line)
+    chosen_start = [k for k,v in max_occurence_dict.items() if v == max(max_occurence_dict.values())]
+    chosen_start = chosen_start[np.random.randint(len(chosen_start))] if len(chosen_start) > 1 else chosen_start[0]
+    
+    available_literals = [key for key, val in vars_dict.items() if val == None]
+
+    if chosen_start[:3] == "row":
+        candidate_literals = [i for i in available_literals if int(str(i)[0]) == int(chosen_start[3:])]
+        
+    elif chosen_start[:3] == "col":
+        candidate_literals = [i for i in available_literals if int(str(i)[1]) == int(chosen_start[3:])]
+        
+    elif chosen_start[:3] == "sq.":
+        square_no = int(chosen_start[3:])
+        
+        if sudoku_size == 16:
+            if square_no in (1,5,9,13):
+                lower_col_boundary = 0
+                upper_col_boundary = 5
+            
+            if square_no in (2,6,10,14):
+                lower_col_boundary = 4
+                upper_col_boundary = 9
+            
+            if square_no in (3,7,11,15):
+                lower_col_boundary = 8
+                upper_col_boundary = 13
+            
+            if square_no in (4,8,12,16):
+                lower_col_boundary = 12
+                upper_col_boundary = 17
+            
+            if square_no in (1,2,3,4):
+                lower_row_boundary = 0
+                upper_row_boundary = 5
+            
+            if square_no in (5,6,7,8):
+                lower_row_boundary = 4
+                upper_row_boundary = 9
+            
+            if square_no in (9,10,11,12):
+                lower_row_boundary = 8
+                upper_row_boundary = 13
+            
+            if square_no in (13,14,15,16):
+                lower_row_boundary = 12
+                upper_row_boundary = 17
+                
+        if sudoku_size == 9:
+            if square_no in (1,4,7):
+                lower_col_boundary = 0
+                upper_col_boundary = 4
+            
+            if square_no in (2,5,8):
+                lower_col_boundary = 3
+                upper_col_boundary = 7
+            
+            if square_no in (3,6,9):
+                lower_col_boundary = 6
+                upper_col_boundary = 10
+            
+            if square_no in (1,2,3):
+                lower_row_boundary = 0
+                upper_row_boundary = 4
+            
+            if square_no in (4,5,6):
+                lower_row_boundary = 3
+                upper_row_boundary = 7
+            
+            if square_no in (7,8,9):
+                lower_row_boundary = 6
+                upper_row_boundary = 10
+        
+        elif sudoku_size == 4:
+            if square_no == 1:
+                lower_col_boundary = 0
+                upper_col_boundary = 3
+                lower_row_boundary = 0
+                upper_row_boundary = 3
+            
+            if square_no == 2:
+                lower_col_boundary = 2
+                upper_col_boundary = 5
+                lower_row_boundary = 0
+                upper_row_boundary = 3
+            
+            if square_no == 3:
+                lower_col_boundary = 0
+                upper_col_boundary = 3
+                lower_row_boundary = 2
+                upper_row_boundary = 5
+            
+            if square_no == 4:
+                lower_col_boundary = 2
+                upper_col_boundary = 5
+                lower_row_boundary = 2
+                upper_row_boundary = 5
+            
+        candidate_literals = [i for i in available_literals if int(str(i)[0]) > lower_row_boundary and int(str(i)[0]) < upper_row_boundary and int(str(i)[1]) > lower_col_boundary and int(str(i)[1]) < upper_col_boundary]
+            
+    # Choose a random literal from all candidate literals and assign True to it
+    literal = candidate_literals[np.random.randint(len(candidate_literals))]
+    assignment = True
+    
+    return literal, assignment
+        
 
 
 
@@ -218,7 +439,6 @@ if __name__ == "__main__":
 
     test_clauses = [[1, 2, 3], [1, -2], [1, -3], [-2, 3]]
     literals = [1, 2, 3]
-
 
     # Small test cases provided below
 
