@@ -64,21 +64,6 @@ def add_rules(unit_clauses, rules_path):
     WORKS
     '''
 
-    # ## PART1: turn rules file into list of clauses
-    # rules_cnf = []
-
-    # # turn rules txt file into list of clauses. Loop over all but the first line
-    # with open(rules_path, 'r') as f:
-
-    #     lines = f.readlines()
-
-    #     for clause in lines[1:]:
-
-    #         # add clauses as list of variables to list of clauses. Ignore last element bc this is 0 for each line
-    #         split_clause = clause.split(" ")
-    #         split_clause_ints = [int(var) for var in split_clause[:-1]]
-    #         rules_cnf.append(split_clause_ints)
-
     rules = read_DIMACS(rules_path)
 
     ## PART2: append rules clauses to unit clauses
