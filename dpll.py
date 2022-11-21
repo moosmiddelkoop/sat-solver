@@ -7,6 +7,7 @@
 import numpy as np
 from collections import Counter
 from copy import deepcopy
+import time
 
 test_clauses = [[1, 2, 3], [1, -2], [1, -3], [-2, 3]]
 literals = [1, 2, 3]
@@ -79,7 +80,7 @@ def check_result(clauses):
         return None
 
 ### CHECK WHERE BEST TO PLACE SUDOKU SIZE
-def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
+def solve(clauses, var_dict, backtracks, heuristic = None, sudoku_size = 9):
     """
     Recursive DPLL solver
     """
@@ -95,7 +96,7 @@ def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
 
     satisfiable = check_result(temp_clauses)
     if satisfiable != None: 
-        return satisfiable, temp_vars
+        return satisfiable, temp_vars, backtracks
     
     # Threshold for human heuristic: if more than 60% of Sudoku filled, do not apply heuristic
     if heuristic == 'human':
@@ -106,58 +107,58 @@ def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
     if heuristic == None:
         # Extract key of first literal that == None
         next_literal = [k for (k, v) in temp_vars.items() if v == None][0]
-
         # First: for literal = FALSE
         temp_vars[next_literal] = False # Truth Assignment
         variable = -next_literal
-
-        # temp temp
         false_clauses = simplify_clauses(temp_clauses, variable)
-        result = solve(false_clauses, temp_vars)
+        result = solve(false_clauses, temp_vars, backtracks, heuristic, sudoku_size)
         if(result[0]): 
             temp_clauses = false_clauses
             return result
 
         #Then: try literal = True
+        backtracks += 1
         temp_vars[next_literal] = True
         variable = next_literal
         temp_clauses = simplify_clauses(temp_clauses, variable)
-        return solve(temp_clauses, temp_vars)
+        return solve(temp_clauses, temp_vars, backtracks, heuristic, sudoku_size)
 
     #After handling unit clause, apply heuristics
     elif heuristic == 'human':
-
+        
         key, assignment = human_heuristic(temp_vars, sudoku_size)
         temp_vars[key] = assignment
         variable = key if assignment else -key
-        temp_clauses = simplify_clauses(temp_clauses, variable)
-        result = solve(temp_clauses, temp_vars)
+        false_clauses = simplify_clauses(temp_clauses, variable)
+        result = solve(false_clauses, temp_vars, backtracks, heuristic, sudoku_size)
         if(result[0]): 
+            temp_clauses = false_clauses
             return result
     
         # Then: Try opposite
+        backtracks += 1
         temp_vars[key] = False if assignment else True # Truth Assignment
         variable = -key if assignment else key
         temp_clauses = simplify_clauses(temp_clauses, variable)
-        result = solve(temp_clauses, temp_vars)
-
-        return solve(temp_clauses, temp_vars)
+        return solve(temp_clauses, temp_vars, backtracks, heuristic, sudoku_size)
 
     elif heuristic == 'DLCS':
-        key, assignment = jeroslaw_heuristic(temp_clauses, temp_vars)
+        candidate_vars = [k for (k, v) in temp_vars.items() if v == None]
+        key, assignment = dlcs_heuristic(temp_clauses, candidate_vars)
         temp_vars[key] = assignment
         variable = key if assignment else -key
-        temp_clauses = simplify_clauses(temp_clauses, variable)
-        result = solve(temp_clauses, temp_vars)
+        false_clauses = simplify_clauses(temp_clauses, variable)
+        result = solve(false_clauses, temp_vars, backtracks, heuristic, sudoku_size)
         if(result[0]): 
+            temp_clauses = false_clauses
             return result
     
         # Then: Try opposite
+        backtracks += 1
         temp_vars[key] = False if assignment else True # Truth Assignment
         variable = -key if assignment else key
         temp_clauses = simplify_clauses(temp_clauses, variable)
-        result = solve(temp_clauses, temp_vars)
-        return solve(temp_clauses, temp_vars)
+        return solve(temp_clauses, temp_vars, backtracks, heuristic, sudoku_size)
 
 
 def handle_unit(clauses, var_dict):
@@ -213,31 +214,32 @@ def dpll(clauses, heuristic=None):
     if satisfiable != None: 
         return satisfiable, variables
 
+    backtracks = 0
+    
     # solve it
-    return solve(clauses, variables, heuristic, sudoku_size)
+    return solve(clauses, variables, backtracks, heuristic, sudoku_size)
 
 
-def jeroslaw_heuristic(clauses, vars_dict):
+def dlcs_heuristic(clauses, vars):
 
-    '''Jeroslow-Wang Two Sided Heuristic'''
+    '''DLCS Heuristic'''
 
     count_dict = {}
     pos_count, neg_count = 0,0
-    for l in vars_dict.keys():
-        for clause in clauses:
-            if l in clause: pos_count += (2 ** -len(clause))
-            if -l in clause: neg_count += (2 ** -len(clause))
-        total_count = pos_count + neg_count
-        count_dict.update({l: [total_count, pos_count, neg_count]})
+    for clause in clauses:
+        for l in vars:
+            if l in clause: pos_count += 1
+            if -l in clause: neg_count += 1
+            total_count = pos_count + neg_count
+            count_dict.update({l: [total_count, pos_count, neg_count]})
 
-    max_count = max([value[0] for value in count_dict.values()])
-    max_key = [key for key, value in count_dict.items() if value[0] == max_count][0]
-    
-    #Assignment:
-    assignment = True if count_dict[max_key][1] > count_dict[max_key][2] else False
-    
-    return max_key, assignment
-
+        max_count = max([value[0] for value in count_dict.values()])
+        max_key = [key for key, value in count_dict.items() if value[0] == max_count][0]
+        
+        #Assignment:
+        assignment = True if count_dict[max_key][1] > count_dict[max_key][2] else False
+        
+        return max_key, assignment
 
 
 def human_heuristic(vars_dict, sudoku_size):
@@ -474,4 +476,4 @@ if __name__ == "__main__":
     # FALSE
     # clauses = [[-4, 5], [-5, 4], [-4, -5], [4, 5], [1, 3, 2], [3, -2, -1]]
 
-    print(dpll(clauses))
+    #print(dpll(clauses))

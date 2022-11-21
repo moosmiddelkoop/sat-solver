@@ -89,7 +89,8 @@ def read_DIMACS(filename):
             split_clause = line.split(" ")
             split_clause_ints = [int(var) for var in split_clause[:-1]]
             clauses.append(split_clause_ints)
-
+    
+    
     return clauses
 
             
@@ -101,8 +102,7 @@ def run(input_path, rules_path, heuristic=None):
     output: solved sudoku in dict format
     '''
 
-    satisfiabilities = []
-    variables = []
+    satisfiabilities, variables, backtracks = [], [], []
 
     with open(input_path, 'r') as f:
 
@@ -117,6 +117,7 @@ def run(input_path, rules_path, heuristic=None):
 
             satisfiabilities.append(solution[0])
             variables.append(solution[1])
+            backtracks.append(solution[2])
 
         #CODE FOR RUNNING ONE LINE
         # line = lines[2]
@@ -129,7 +130,7 @@ def run(input_path, rules_path, heuristic=None):
         # satisfiabilities.append(solution[0])
         # variables.append(solution[1])
 
-    return satisfiabilities, variables
+    return satisfiabilities, variables, backtracks
 
 def solutions_to_DIMACS(vars_dict, filename):
     '''
@@ -161,7 +162,7 @@ def solutions_to_DIMACS(vars_dict, filename):
     return
 
 if __name__ == "__main__":
-
+    
     if len(sys.argv) != 3:
         raise Exception("Unexpected number of arguments, please provide strategy and input file")
 
@@ -186,22 +187,22 @@ if __name__ == "__main__":
             rules_filename = "rules/sudoku-rules-16x16.txt"
         else:
             raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
-
+ 
     # run the program
     if strategy == '-S1':
-        print("Solving using strategy 1")
-        satisfiability, variables = run(input_filename, rules_filename)
+        print("Solving using DPLL without heuristics")
+        satisfiability, variables, backtracks = run(input_filename, rules_filename)
     elif strategy == '-S2':
-        print("Solving using strategy 2, not implemented yet")
-        satisfiability, variables = run(input_filename, rules_filename, heuristic='DLCS')
+        print("Solving using the DLCS heuristic")
+        satisfiability, variables, backtracks = run(input_filename, rules_filename, heuristic='DLCS')
     elif strategy == '-S3':
-        print("Solving using strategy 3, not implemented yet")
-        satisfiability, variables = run(input_filename, rules_filename, heuristic='human')
+        print("Solving using the Human heuristic")
+        satisfiability, variables, backtracks = run(input_filename, rules_filename, heuristic='human')
     else:
         raise Exception("Unexpected strategy, please provide -S1, -S2 or -S3")
 
-    for i, sat in enumerate(satisfiability):
-        print(f"Sudoku {i} is satisfiable: {sat}")
+    for i, (sat, bt) in enumerate(zip(satisfiability, backtracks)):
+        print(f"Sudoku {i} is satisfiable: {sat} with {bt} backtracks")
 
     show_vars = input("Would you like to see the variables that make this sudoku true? (y/n)")
 
@@ -211,7 +212,7 @@ if __name__ == "__main__":
 
     # write solutions to file
     solutions_to_DIMACS(variables[0], filename="test_output")
-
+    
     # truths, vars = run("test_sudokus/4x4.txt", "rules/sudoku-rules-4x4.txt")
     # print(truths)
 
