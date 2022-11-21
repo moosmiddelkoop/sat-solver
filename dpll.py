@@ -6,6 +6,7 @@
 
 import numpy as np
 from collections import Counter
+from copy import deepcopy
 
 test_clauses = [[1, 2, 3], [1, -2], [1, -3], [-2, 3]]
 literals = [1, 2, 3]
@@ -34,20 +35,23 @@ def simplify_clauses(clauses, variable):
     returns: simplified clauses list
     """
     
-    clauses_copy = clauses.copy()
+    clauses_copy = deepcopy(clauses)
+    # clauses_copy = clauses.copy()
+
+    # Eliminates clauses that containt the variable
+    # clauses_copy = [clause for clause in clauses if variable not in clause]
 
     for clause in clauses:
-        
-        # For True literals: remove whole clause from knowledge base
         if variable in clause:
             clauses_copy.remove(clause)
 
+    # Eliminates literals from clauses when the negative literal is included
     for clause in clauses_copy:
-        
+
         # For False literals: remove literal from clause
         if -variable in clause:
             clause.remove(-variable)
-                
+
     return clauses_copy
 
 
@@ -61,8 +65,10 @@ def check_result(clauses):
     if len(clauses) == 0:
         return True
 
+    i = 0
     # contradiction/UNSAT if any empty clause is included in the knowledge base
     for clause in clauses:
+        i += 1
         if len(clause) == 0:
             return False
 
@@ -81,6 +87,8 @@ def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
     # Create deepcopies of clauses and literals up to this point
     temp_clauses = clauses.copy()
     temp_vars = var_dict.copy()
+    # temp_clauses = deepcopy(clauses)
+    # temp_vars = deepcopy(var_dict)
 
     # handle unit clauses
     temp_clauses, temp_vars = handle_unit(temp_clauses, temp_vars)
@@ -89,6 +97,12 @@ def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
     if satisfiable != None: 
         return satisfiable, temp_vars
     
+    # Threshold for human heuristic: if more than 60% of Sudoku filled, do not apply heuristic
+    if heuristic == 'human':
+        no_true_literals = len([k for k,v in temp_vars.items() if v == True])
+        if no_true_literals > (sudoku_size ** 2) * 0.7:
+            heuristic = None
+    
     if heuristic == None:
         # Extract key of first literal that == None
         next_literal = [k for (k, v) in temp_vars.items() if v == None][0]
@@ -96,9 +110,12 @@ def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
         # First: for literal = FALSE
         temp_vars[next_literal] = False # Truth Assignment
         variable = -next_literal
-        temp_clauses = simplify_clauses(temp_clauses, variable)
-        result = solve(temp_clauses, temp_vars)
+
+        # temp temp
+        false_clauses = simplify_clauses(temp_clauses, variable)
+        result = solve(false_clauses, temp_vars)
         if(result[0]): 
+            temp_clauses = false_clauses
             return result
 
         #Then: try literal = True
@@ -106,13 +123,15 @@ def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
         variable = next_literal
         temp_clauses = simplify_clauses(temp_clauses, variable)
         return solve(temp_clauses, temp_vars)
-    
+
     #After handling unit clause, apply heuristics
     elif heuristic == 'human':
+
         key, assignment = human_heuristic(temp_vars, sudoku_size)
         temp_vars[key] = assignment
         variable = key if assignment else -key
         temp_clauses = simplify_clauses(temp_clauses, variable)
+        result = solve(temp_clauses, temp_vars)
         if(result[0]): 
             return result
     
@@ -121,14 +140,15 @@ def solve(clauses, var_dict, heuristic = None, sudoku_size = 9):
         variable = -key if assignment else key
         temp_clauses = simplify_clauses(temp_clauses, variable)
         result = solve(temp_clauses, temp_vars)
+
         return solve(temp_clauses, temp_vars)
 
-    
     elif heuristic == 'DLCS':
         key, assignment = jeroslaw_heuristic(temp_clauses, temp_vars)
         temp_vars[key] = assignment
         variable = key if assignment else -key
         temp_clauses = simplify_clauses(temp_clauses, variable)
+        result = solve(temp_clauses, temp_vars)
         if(result[0]): 
             return result
     
@@ -194,7 +214,7 @@ def dpll(clauses, heuristic=None):
         return satisfiable, variables
 
     # solve it
-    return solve(clauses, variables, sudoku_size, heuristic)
+    return solve(clauses, variables, heuristic, sudoku_size)
 
 
 def jeroslaw_heuristic(clauses, vars_dict):
@@ -325,7 +345,6 @@ def human_heuristic(vars_dict, sudoku_size):
                          "col" + str(max(col_count_dict_clean, key=col_count_dict_clean.get)): max(col_count_dict_clean.values()),
                         "sq." + str(max(square_count_dict_clean, key=square_count_dict_clean.get)): max(square_count_dict_clean.values())}
 
-    print(max_occurence_dict)
     # Get key of entry in the dictionary that has the highest count. If two have the same, choose one randomly (that's done in the second line)
     chosen_start = [k for k,v in max_occurence_dict.items() if v == max(max_occurence_dict.values())]
     chosen_start = chosen_start[np.random.randint(len(chosen_start))] if len(chosen_start) > 1 else chosen_start[0]
