@@ -9,7 +9,6 @@ from dpll import *
 from tqdm import tqdm
 import re
 
-
 # def __init__(self, input_path, rules):
 #         self.input_path = input_path
 #         self.literal_arr = None
@@ -31,18 +30,16 @@ def read_input(sudoku):
     WORKS
     '''
   
-    sudoku_minus_space = sudoku.replace(" ", "")
+    sudoku_minus_space = sudoku[:-1] if sudoku[-1] == "\n" else sudoku
     unit_clauses = []
     size = math.sqrt(len(sudoku_minus_space))
 
-    # TODO: make it work for multiple inputs
     for i, char in enumerate(sudoku_minus_space):
 
         if char == ".":
             continue
         else:
             digit = char
-            print(digit)
 
             # + 1 because computer counting starts at 0 but human counting starts at 1
             row = str(int(i // size) + 1)
@@ -116,16 +113,21 @@ def run(input_path, rules_path, heuristic=None):
             unit_clauses = read_input(str(line))
             clauses = add_rules(unit_clauses, rules_path)
 
-            satisfiabilities.append(dpll(clauses, heuristic)[0])
-            variables.append(dpll(clauses, heuristic)[1])
+            solution = dpll(clauses, heuristic)
 
-        # CODE FOR RUNNING ONE LINE
-        # line = lines[0]
+            satisfiabilities.append(solution[0])
+            variables.append(solution[1])
 
+        #CODE FOR RUNNING ONE LINE
+        # line = lines[2]
         # unit_clauses = read_input(str(line))
+
         # clauses = add_rules(unit_clauses, rules_path)
 
-        # solutions.append(dpll(clauses))
+        # solution = dpll(clauses, heuristic)
+
+        # satisfiabilities.append(solution[0])
+        # variables.append(solution[1])
 
     return satisfiabilities, variables
 
@@ -160,58 +162,58 @@ def solutions_to_DIMACS(vars_dict, filename):
 
 if __name__ == "__main__":
 
-    # if len(sys.argv) != 3:
-    #     raise Exception("Unexpected number of arguments, please provide strategy and input file")
+    if len(sys.argv) != 3:
+        raise Exception("Unexpected number of arguments, please provide strategy and input file")
 
-    # strategy = sys.argv[1]
-    # input_filename = sys.argv[2]
+    strategy = sys.argv[1]
+    input_filename = sys.argv[2]
 
-    # # get the correct rules file
-    # with open(input_filename, 'r') as input_file:
+    # get the correct rules file
+    with open(input_filename, 'r') as input_file:
 
-    #     # note to self: REMEMBER DIFFERENCE BETWEEN FILENAME AND FILE. SHIT AINT A FILE UNTIL YOU'VE OPENED IT
-    #     # fetch the correct rules file, just make this list so we can count how big the sudoku we're dealing with is
-    #     input_file_list = [input for input in input_file]
+        # note to self: REMEMBER DIFFERENCE BETWEEN FILENAME AND FILE. SHIT AINT A FILE UNTIL YOU'VE OPENED IT
+        # fetch the correct rules file, just make this list so we can count how big the sudoku we're dealing with is
+        input_file_list = [input for input in input_file]
 
-    #     # sneaky detail: input lines end in space, so actual length is always len - 1
-    #     input_line_length = len(input_file_list[0]) - 1
+        # sneaky detail: input lines end in space, so actual length is always len - 1
+        input_line_length = len(input_file_list[0]) - 1
 
-    #     if input_line_length == 16:
-    #         rules_filename = "rules/sudoku-rules-4x4.txt"
-    #     elif input_line_length == 81:
-    #         rules_filename = "rules/sudoku-rules-9x9.txt"
-    #     elif input_line_length == 256:
-    #         rules_filename = "rules/sudoku-rules-16x16.txt"
-    #     else:
-    #         raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
+        if input_line_length == 16:
+            rules_filename = "rules/sudoku-rules-4x4.txt"
+        elif input_line_length == 81:
+            rules_filename = "rules/sudoku-rules-9x9.txt"
+        elif input_line_length == 256:
+            rules_filename = "rules/sudoku-rules-16x16.txt"
+        else:
+            raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
 
-    # # run the program
-    # if strategy == '-S1':
-    #     print("Solving using strategy 1")
-    #     satisfiability, variables = run(input_filename, rules_filename)
-    # elif strategy == '-S2':
-    #     print("Solving using strategy 2, not implemented yet")
-    #     satisfiability, variables = run(input_filename, rules_filename, heuristic='DLCS')
-    # elif strategy == '-S3':
-    #     print("Solving using strategy 3, not implemented yet")
-    #     satisfiability, variables = run(input_filename, rules_filename, heuristic='human')
-    # else:
-    #     raise Exception("Unexpected strategy, please provide -S1, -S2 or -S3")
+    # run the program
+    if strategy == '-S1':
+        print("Solving using strategy 1")
+        satisfiability, variables = run(input_filename, rules_filename)
+    elif strategy == '-S2':
+        print("Solving using strategy 2, not implemented yet")
+        satisfiability, variables = run(input_filename, rules_filename, heuristic='DLCS')
+    elif strategy == '-S3':
+        print("Solving using strategy 3, not implemented yet")
+        satisfiability, variables = run(input_filename, rules_filename, heuristic='human')
+    else:
+        raise Exception("Unexpected strategy, please provide -S1, -S2 or -S3")
 
-    # for i, sat in enumerate(satisfiability):
-    #     print(f"Sudoku {i} is satisfiable: {sat}")
+    for i, sat in enumerate(satisfiability):
+        print(f"Sudoku {i} is satisfiable: {sat}")
 
-    # show_vars = input("Would you like to see the variables that make this sudoku true? (y/n)")
+    show_vars = input("Would you like to see the variables that make this sudoku true? (y/n)")
 
-    # if show_vars == "y":
-    #     for i, vars in enumerate(variables):
-    #         print(f"Variables for sudoku {i}: {vars}")
+    if show_vars == "y":
+        for i, vars in enumerate(variables):
+            print(f"Variables for sudoku {i}: {vars}")
 
-    # # write solutions to file
-    # solutions_to_DIMACS(variables[0], filename="test_output")
+    # write solutions to file
+    solutions_to_DIMACS(variables[0], filename="test_output")
 
-    print(read_input("2.1..3..4.7..6.9"))
-
+    # truths, vars = run("test_sudokus/4x4.txt", "rules/sudoku-rules-4x4.txt")
+    # print(truths)
 
 
 
