@@ -161,6 +161,32 @@ def solutions_to_DIMACS(vars_dict, filename):
     
     return
 
+
+def find_rules(input_path):
+    '''
+    input: sudoku filepath
+    output: rule filepath to use
+    '''
+
+    with open(input_path, 'r') as input_file:
+
+        input_file_list = [input for input in input_file]
+
+        # sneaky detail: input lines end in space, so actual length is always len - 1
+        input_line_length = len(input_file_list[0]) - 1
+
+        if input_line_length == 16:
+            rules_path = "rules/sudoku-rules-4x4.txt"
+        elif input_line_length == 81:
+            rules_path = "rules/sudoku-rules-9x9.txt"
+        elif input_line_length == 256:
+            rules_path = "rules/sudoku-rules-16x16.txt"
+        else:
+            raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
+
+    return rules_path
+
+
 if __name__ == "__main__":
     
     if len(sys.argv) != 3:
@@ -169,24 +195,9 @@ if __name__ == "__main__":
     strategy = sys.argv[1]
     input_filename = sys.argv[2]
 
+
     # get the correct rules file
-    with open(input_filename, 'r') as input_file:
-
-        # note to self: REMEMBER DIFFERENCE BETWEEN FILENAME AND FILE. SHIT AINT A FILE UNTIL YOU'VE OPENED IT
-        # fetch the correct rules file, just make this list so we can count how big the sudoku we're dealing with is
-        input_file_list = [input for input in input_file]
-
-        # sneaky detail: input lines end in space, so actual length is always len - 1
-        input_line_length = len(input_file_list[0]) - 1
-
-        if input_line_length == 16:
-            rules_filename = "rules/sudoku-rules-4x4.txt"
-        elif input_line_length == 81:
-            rules_filename = "rules/sudoku-rules-9x9.txt"
-        elif input_line_length == 256:
-            rules_filename = "rules/sudoku-rules-16x16.txt"
-        else:
-            raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
+    rules_filename = find_rules(input_filename)
  
     # run the program
     if strategy == '-S1':
