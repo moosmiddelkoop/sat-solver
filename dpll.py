@@ -105,8 +105,10 @@ def solve(clauses, var_dict, backtracks, heuristic = None, sudoku_size = 9, dept
             heuristic = None
     
     if heuristic == None:
+        
         # Extract key of first literal that == None
         next_literal = [k for (k, v) in temp_vars.items() if v == None][0]
+
         # First: for literal = FALSE
         temp_vars[next_literal] = False # Truth Assignment
         variable = -next_literal

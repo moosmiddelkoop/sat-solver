@@ -25,7 +25,7 @@ def experiment(input_path, heuristic=None):
 
 if __name__ == "__main__":
 
-    OUTPUT_PATH = "backtracks-damnhard-S3.txt"
+    OUTPUT_PATH = "solutions/backtracks-damnhard-S3.txt"
 
     # get the input path and strategy
     input_path = sys.argv[2]
