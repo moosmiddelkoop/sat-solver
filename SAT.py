@@ -188,6 +188,8 @@ def find_rules(input_path):
 
 
 if __name__ == "__main__":
+
+    OUTPUT_PATH = 'solutions/test.out'
     
     if len(sys.argv) != 3:
         raise Exception("Unexpected number of arguments, please provide strategy and input file")
@@ -213,7 +215,7 @@ if __name__ == "__main__":
         raise Exception("Unexpected strategy, please provide -S1, -S2 or -S3")
 
     for i, (sat, bt) in enumerate(zip(satisfiability, backtracks)):
-        print(f"Sudoku {i} is satisfiable: {sat} with {bt} backtracks")
+        print(f"Sudoku {i} is satisfiable: {sat}.\tNr. backtracks: {bt}")
 
     show_vars = input("Would you like to see the variables that make this sudoku true? (y/n)")
 
@@ -222,7 +224,7 @@ if __name__ == "__main__":
             print(f"Variables for sudoku {i}: {vars}")
 
     # write solutions to file
-    solutions_to_DIMACS(variables[0], filename="test_output")
+    solutions_to_DIMACS(variables[0], filename=OUTPUT_PATH)
     
     # truths, vars = run("test_sudokus/4x4.txt", "rules/sudoku-rules-4x4.txt")
     # print(truths)
