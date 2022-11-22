@@ -80,7 +80,7 @@ def check_result(clauses):
         return None
 
 ### CHECK WHERE BEST TO PLACE SUDOKU SIZE
-def solve(clauses, var_dict, backtracks, heuristic = None, sudoku_size = 9):
+def solve(clauses, var_dict, backtracks, heuristic = None, sudoku_size = 9, depth=0):
     """
     Recursive DPLL solver
     """
@@ -111,7 +111,7 @@ def solve(clauses, var_dict, backtracks, heuristic = None, sudoku_size = 9):
         temp_vars[next_literal] = False # Truth Assignment
         variable = -next_literal
         false_clauses = simplify_clauses(temp_clauses, variable)
-        result = solve(false_clauses, temp_vars, backtracks, heuristic, sudoku_size)
+        result = solve(false_clauses, temp_vars, backtracks, heuristic, sudoku_size, depth=depth+1)
         if(result[0]): 
             temp_clauses = false_clauses
             return result
@@ -121,7 +121,7 @@ def solve(clauses, var_dict, backtracks, heuristic = None, sudoku_size = 9):
         temp_vars[next_literal] = True
         variable = next_literal
         temp_clauses = simplify_clauses(temp_clauses, variable)
-        return solve(temp_clauses, temp_vars, backtracks, heuristic, sudoku_size)
+        return solve(temp_clauses, temp_vars, backtracks, heuristic, sudoku_size, depth=depth+1)
 
     #After handling unit clause, apply heuristics
     elif heuristic == 'human':
