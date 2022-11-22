@@ -23,6 +23,9 @@ def experiment(input_path, heuristic=None):
 
     return backtracks
 
+def plot():
+    pass
+
 if __name__ == "__main__":
 
     OUTPUT_PATH = "solutions/backtracks-damnhard-S3.txt"
@@ -31,19 +34,17 @@ if __name__ == "__main__":
     input_path = sys.argv[2]
     strategy = sys.argv[1]
 
-    if strategy == "-S1":
-        heuristic = None
-    elif strategy == "-S2":
-        heuristic = "DLCS"
-    elif strategy == "-S3":
-        heuristic = "human"
-    else:
+    # create dictionary to map input to correct heuristic
+    heuristic_dict = {"-S1": None, "-S2": "DLCS", "-S3": "human"}
+
+    # check if strategy is valid
+    if strategy not in heuristic_dict.keys():
         print("Invalid strategy")
-        exit()
 
     # run the experiment
-    backtracks = experiment(input_path, heuristic)
+    backtracks = experiment(input_path, heuristic_dict[strategy])
 
+    # simple histplot
     y_list = np.linspace(0, len(backtracks), len(backtracks))
     plt.hist(backtracks)
     plt.show()
