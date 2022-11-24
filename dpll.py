@@ -114,7 +114,8 @@ def solve(clauses, var_dict, backtracks, heuristic = None, sudoku_size = 9, dept
         variable = -next_literal
         false_clauses = simplify_clauses(temp_clauses, variable)
         result = solve(false_clauses, temp_vars, backtracks, heuristic, sudoku_size, depth=depth+1)
-        if(result[0]): 
+
+        if(result[0] == True): 
             temp_clauses = false_clauses
             return result
 
@@ -204,6 +205,9 @@ def dpll(clauses, heuristic=None):
     '''
     MASTER FUNCTION
     '''
+
+    BACKTRACKS = 0
+
     # get variable dict
     variables = get_vars(clauses)   
 
