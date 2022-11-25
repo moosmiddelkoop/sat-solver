@@ -197,7 +197,6 @@ if __name__ == "__main__":
     strategy = sys.argv[1]
     input_filename = sys.argv[2]
 
-
     # get the correct rules file
     rules_filename = find_rules(input_filename)
  
