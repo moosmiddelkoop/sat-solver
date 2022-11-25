@@ -12,8 +12,12 @@ def histogram(backtrack_path, title="Histogram of Backtracks", output_file="hist
 
     # read the backtracks from the file
     with open(backtrack_path, 'r') as f:
-        backtracks = f.readlines()[0]
-        backtracks = [int(backtrack) for backtrack in backtracks]
+        # backtracks = f.readlines()[0]
+        # backtracks = [int(backtrack) for backtrack in backtracks]
+
+        backtracks = f.readlines()[2:1012]
+        backtracks = [int(backtrack[0]) for backtrack in backtracks]
+
 
     # plot the histogram bins = max(backtracks bc there are only integers and we want a bar for each integer)
     plt.hist(backtracks, bins=max(backtracks), align='left')
@@ -32,8 +36,10 @@ def boxplot(backtrack_paths, title="Boxplot of Backtracks", output_file="boxplot
 
         # read the backtracks from the file
         with open(path, 'r') as f:
-            backtracks = f.readlines()[0]
-            backtracks = [int(backtrack) for backtrack in backtracks]
+            # backtracks = f.readlines()[0]
+            # backtracks = [int(backtrack) for backtrack in backtracks]
+
+            backtracks = f.readlines()[1:35]
         
             all_strategies.append(backtracks)
 
@@ -53,11 +59,11 @@ if __name__ == "__main__":
     type = sys.argv[1]
 
     if type == "histogram":
-        histogram('results/backtracks-damnhard-S3.txt', 
-                title='Histogram of backtracks per sudoku for damnhard.sdk.txt with heuristic: human',
-                output_file='damnhard_S3.png')
+        histogram('results/1000_sudokus_S3.txt', 
+                title='Histogram of backtracks per sudoku for 1000_sudokus.txt with heuristic: human',
+                output_file='1000_S3_v2_hist.png')
         
     elif type == 'boxplot':
-        boxplot(['results/backtracks.txt', 'results/backtracks-S2.txt', 'results/backtracks-S3.txt'],
-                title='Boxplot of backtracks per sudoku for 1000_sudokus.txt',
-                output_file='1000_sudokus_boxplot.png')
+        boxplot(['results/damnhard_S1.txt', 'results/damnhard_S2.txt', 'results/damnhard_S3.txt'],
+                title='Boxplot of backtracks per sudoku for damnhard.sdk.txt',
+                output_file='damnhard_boxplot_v2.png')
