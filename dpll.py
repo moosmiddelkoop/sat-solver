@@ -231,7 +231,7 @@ def dpll(clauses, heuristic=None):
     # solve it
     solution = solve(clauses, variables, heuristic, sudoku_size)
     # print("Backtracks: ", BACKTRACKS)
-    
+
     return solution, BACKTRACKS, ASSIGNMENTS, DEPTHS
 
 
@@ -240,24 +240,21 @@ def dlcs_heuristic(clauses, vars):
     '''DLCS Heuristic'''
 
     count_dict = {}
-    for l in vars:
-        pos_count, neg_count = 0,0
-        
-        for clause in clauses:
+    pos_count, neg_count = 0,0
+    for clause in clauses:
+        for l in vars:
             if l in clause: pos_count += 1
             if -l in clause: neg_count += 1
-    
-        total_count = pos_count + neg_count
-        count_dict.update({l: [total_count, pos_count, neg_count]})
+            total_count = pos_count + neg_count
+            count_dict.update({l: [total_count, pos_count, neg_count]})
 
-    max_count = max([value[0] for value in count_dict.values()])
-    max_key = [key for key, value in count_dict.items() if value[0] == max_count][0]
-    
-    #Assignment:
-    assignment = True if count_dict[max_key][1] > count_dict[max_key][2] else False
-    
-    return max_key, assignment
-
+        max_count = max([value[0] for value in count_dict.values()])
+        max_key = [key for key, value in count_dict.items() if value[0] == max_count][0]
+        
+        #Assignment:
+        assignment = True if count_dict[max_key][1] > count_dict[max_key][2] else False
+        
+        return max_key, assignment
 
 
 def human_heuristic(vars_dict, sudoku_size):

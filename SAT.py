@@ -1,6 +1,7 @@
-#############################################
-# This file deals with most of the I/O action
-#############################################
+##############################################################################
+# This file deals with most of the I/O action                                #
+# Only accepts one sudoku at a time in cnf format as per the assignment      #
+##############################################################################
 
 import sys
 import math
@@ -8,18 +9,6 @@ import numpy as np
 from dpll import *
 from tqdm import tqdm
 import re
-
-# def __init__(self, input_path, rules):
-#         self.input_path = input_path
-#         self.literal_arr = None
-#         self.unit_clauses = []
-#         self.rules = rules
-#         self.clauses = None
-
-#         # see comments in ifnameismain part
-#         with open(input, 'r') as f:
-#             self.input_list = [line for line in f]
-#             self.size = math.sqrt(len(input_list[0]) - 1)
 
 
 def read_input(sudoku):
@@ -94,43 +83,26 @@ def read_DIMACS(filename):
     return clauses
 
             
-def run(input_path, rules_path, heuristic=None):
+def run(clauses, heuristic):
     '''
     MASTER FUNCTION, currently only works for a single sudoku
     
-    input: sudoku file path, rules file path
-    output: solved sudoku in dict format
+    input: sudoku clauses, heuristic
+    output: 
+    - satisfiability (boolean)
+    - variables: (dict of variables with values True or False)
+    - backtracks: (number of backtracks performed)
+    - decisions: (number of decisions made, basically a count of non-forced moves)
     '''
 
-    satisfiabilities, variables, backtracks = [], [], []
+    solution = dpll(clauses, heuristic)
 
-    with open(input_path, 'r') as f:
+    satisfiability = (solution[0][0])
+    variables = (solution[0][1])
+    backtracks = (solution[1])
+    decisions = (solution[2])
 
-        lines = f.readlines()
-
-        for line in tqdm(lines):
-
-            unit_clauses = read_input(str(line))
-            clauses = add_rules(unit_clauses, rules_path)
-
-            solution = dpll(clauses, heuristic)
-
-            satisfiabilities.append(solution[0])
-            variables.append(solution[1])
-            backtracks.append(solution[2])
-
-        #CODE FOR RUNNING ONE LINE
-        # line = lines[2]
-        # unit_clauses = read_input(str(line))
-
-        # clauses = add_rules(unit_clauses, rules_path)
-
-        # solution = dpll(clauses, heuristic)
-
-        # satisfiabilities.append(solution[0])
-        # variables.append(solution[1])
-
-    return satisfiabilities, variables, backtracks
+    return satisfiability, variables, backtracks, decisions
 
 def solutions_to_DIMACS(vars_dict, filename):
     '''
@@ -146,7 +118,7 @@ def solutions_to_DIMACS(vars_dict, filename):
     n_clauses = len(vars_dict)
 
     # write to file
-    with open(f"solutions/{filename}.out", "w") as f:
+    with open(filename, "w") as f:
 
         # write header
         f.write(f"p cnf {n_clauses} {n_vars}\n")
@@ -179,54 +151,53 @@ def find_rules(input_path):
             rules_path = "rules/sudoku-rules-4x4.txt"
         elif input_line_length == 81:
             rules_path = "rules/sudoku-rules-9x9.txt"
-        elif input_line_length == 256:
-            rules_path = "rules/sudoku-rules-16x16.txt"
         else:
-            raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4, 9x9, 16x16. Size {math.sqrt(input_line_length)} was found")
+            raise Exception(f"Unexpected sudoku size. Supported sudoku sizes are: 4x4 and 9x9. Size {math.sqrt(input_line_length)} was found")
 
     return rules_path
 
 
 if __name__ == "__main__":
-
-    OUTPUT_PATH = 'solutions/test.out'
     
     if len(sys.argv) != 3:
         raise Exception("Unexpected number of arguments, please provide strategy and input file")
 
     strategy = sys.argv[1]
-    input_filename = sys.argv[2]
+    input_path = sys.argv[2]
+    output_path = input_path + ".out"
+    print(output_path)
 
-    # get the correct rules file
-    rules_filename = find_rules(input_filename)
+    clauses = read_DIMACS(input_path)
  
     # run the program
     if strategy == '-S1':
         print("Solving using DPLL without heuristics")
-        satisfiability, variables, backtracks = run(input_filename, rules_filename)
+        satisfiability, variables, backtracks, assignments = run(clauses, heuristic=None)
     elif strategy == '-S2':
         print("Solving using the DLCS heuristic")
-        satisfiability, variables, backtracks = run(input_filename, rules_filename, heuristic='DLCS')
+        satisfiability, variables, backtracks, assignments = run(clauses, heuristic='DLCS')
     elif strategy == '-S3':
         print("Solving using the Human heuristic")
-        satisfiability, variables, backtracks = run(input_filename, rules_filename, heuristic='human')
+        satisfiability, variables, backtracks, assignments = run(clauses, heuristic='human')
     else:
         raise Exception("Unexpected strategy, please provide -S1, -S2 or -S3")
-
-    for i, (sat, bt) in enumerate(zip(satisfiability, backtracks)):
-        print(f"Sudoku {i} is satisfiable: {sat}.\tNr. backtracks: {bt}")
-
-    show_vars = input("Would you like to see the variables that make this sudoku true? (y/n)")
-
-    if show_vars == "y":
-        for i, vars in enumerate(variables):
-            print(f"Variables for sudoku {i}: {vars}")
-
-    # write solutions to file
-    solutions_to_DIMACS(variables[0], filename=OUTPUT_PATH)
     
-    # truths, vars = run("test_sudokus/4x4.txt", "rules/sudoku-rules-4x4.txt")
-    # print(truths)
+    # write solutions to file
+    solutions_to_DIMACS(variables, filename=output_path)
+
+    print(f"The sudoku: {input_path} is satisfiable: {satisfiability}.")
+
+    see_backtracks = input("Do you want to see the number of backtracks? (y/n): ")
+    if see_backtracks == 'y':
+        print(backtracks)
+
+    see_assignments = input("Do you want to see the number of decisions made? (y/n): ")
+    if see_assignments == 'y':
+        print(assignments)
+
+    show_vars = input("Would you like to see the variables that make this sudoku true? (y/n): ")
+    if show_vars == "y":
+        print(variables)
 
 
 

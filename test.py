@@ -11,6 +11,7 @@ output_path = sys.argv[3]
 start = time.time()
 
 solution = dpll(clauses, heuristic)
+print(solution)
 
 end = time.time()
 
