@@ -57,6 +57,39 @@ def boxplot(backtrack_paths, title="Boxplot of Backtracks", output_file="boxplot
     plt.savefig(f"figs/boxplots/{output_file}")
     plt.show()
 
+def combined_hist(backtrack_paths, lastline, title="Combined hist of backtracks for multiple strategies",
+                  output_file='combined_hist.png'):
+
+    # create dataframe of backtracks for all strategies
+    columns = ['backtracks', 'strategy']
+    df = pd.DataFrame(columns=columns)
+
+    backtracks = []
+    strategies = []
+
+    for i, backtrack in enumerate(backtrack_paths):
+        with open(backtrack, 'r') as f:
+            backtrack_lines = f.readlines()[1:lastline]
+            backtracks.append([int(backtrack) for backtrack in backtrack_lines])
+            strategies.append([i+1] * len(backtracks[i]))
+
+    backtracks = [item for sublist in backtracks for item in sublist]
+    strategies = [item for sublist in strategies for item in sublist]
+    print(backtracks)
+    # print(strategies)
+
+    df['backtracks'] = backtracks
+    df['strategy'] = strategies
+    
+    # plot the combined histogram
+    sns.histplot(df, bins=(round(max(backtracks)/10)), x='backtracks', hue='strategy', palette='bright')
+    plt.title(title, pad=20, font='arial', fontsize=13)
+    plt.ylabel("Number of backtracks per Sudoku", font='arial', fontsize=12, labelpad=10)
+    plt.xlabel("Number of backtracks", font='arial', fontsize=12, labelpad=10)
+    plt.savefig(f"figs/histograms/{output_file}")
+    plt.show()
+
+          
 if __name__ == "__main__":
 
     type = sys.argv[1]
@@ -70,3 +103,9 @@ if __name__ == "__main__":
         boxplot(['results/500_S1.txt', 'results/500_S3.txt'],
                 title='Boxplot of backtracks per sudoku for 500 hard 9x9 Sudokus',
                 output_file='500_v4.png')
+        
+    elif type == "combined_hist":
+        combined_hist(['results/1000_S1_v3.txt', 'results/1000_S2_v3.txt', 'results/1000_S3_v3.txt'],
+                      lastline=1011,
+                      title='Combined histogram of backtracks per sudoku for 1000 9x9 Sudokus',
+                      output_file='1000_combined_hist.png')
